@@ -1,0 +1,23 @@
+{
+  "name": "dbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aminmarashi-binary/dbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aminmarashi-binary/dbot/issues"
+  },
+  "homepage": "https://github.com/aminmarashi-binary/dbot#readme",
+  "dependencies": {
+    "@deriv/deriv-api": "^1.0.3",
+    "ws": "^7.2.0"
+  }
+}
