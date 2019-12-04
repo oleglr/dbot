@@ -32,8 +32,6 @@ class Strategy {
         this.profitEvent = profitEvent;
         this.bollingerBands = bollingerBands;
         this.stake = analysisStake;
-        this.proposalSubscribers = {};
-        this.pocSubscribers = {};
         this.profit = 0;
 
         this.init();
@@ -41,13 +39,13 @@ class Strategy {
 
     async init() {
         await Promise.all([
-            this.createNewProposal('MULTUP'),
-            this.createNewProposal('MULTDOWN'),
+            this.createNewContract('MULTUP'),
+            this.createNewContract('MULTDOWN'),
         ]);
     }
 
-    async createNewProposal(type) {
-        this.proposal = await this.api.basic.subscribe({
+    async createNewContract(type) {
+        const contract = await this.api.contract({
             proposal: 1,
             amount: this.stake,
             currency: 'USD',
@@ -60,49 +58,36 @@ class Strategy {
             symbol,
         });
 
-        this.proposalSubscribers[type] = this.proposal.subscribe((proposal) => {
-            if (this.buyCondition(proposal)) {
-                this.buy(proposal).then(() => {
-                    this.proposalSubscribers[type].unsubscribe();
-                }).catch(console.log);
+        const subscriber = contract.onUpdate(() => {
+            if (contract.is_opening) {
+                if (this.buyCondition(contract)) {
+                    this.buy(contract).catch(console.log);
+                }
+            } else {
+                if (contract.is_open && this.sellCondition(contract)) {
+                    this.sell(contract).catch(console.log);
+                } else if (contract.is_closed) {
+                    subscriber.unsubscribe();
+                    this.createNewContract(contract.type);
+                    this.profit += contract.profit.signed;
+                    log(`New profit for ${this.name}, ${type}: ${this.profit}`);
+                }
             }
         });
     }
 
-    async buy({ proposal: { id: buy, ask_price: price }, echo_req: { contract_type: type } }) {
-        const purchase = await this.api.basic.buy({buy, price});
-
-        this.poc = this.api.basic.subscribe({
-            proposal_open_contract: 1,
-            contract_id: purchase.contract_id,
-        });
-
-        this.pocSubscribers[type] = this.poc.subscribe(poc => {
-            if (this.sellCondition(poc)) {
-                this.pocSubscribers[type].unsubscribe();
-                this.createNewProposal(type);
-                this.sell(poc).then((sell) => {
-                    this.profit += price - sell.sold_for;
-                    log(`New profit for ${this.name}: ${this.profit}`);
-                }).catch(console.log);
-            } else if (poc.proposal_open_contract.is_sold) {
-                this.pocSubscribers[type].unsubscribe();
-                this.createNewProposal(type);
-                log(poc);
-                this.profit += poc.proposal_open_contract.profit;
-                log(`New profit for ${this.name}: ${this.profit}`);
-            }
-        });
+    async buy(contract) {
+        const purchase = await contract.buy();
     }
 
-    async sell({ proposal_open_contract: { contract_id, bid_price: price } }) {
-        await this.api.basic.sell({ sell: contract_id, price })
+    async sell(contract) {
+        return contract.sell();
     }
 
-    buyCondition({ proposal: { ask_price: price} }) {
+    buyCondition(contract) {
     }
 
-    sellCondition({ proposal_open_contract: { profit } }) {
+    sellCondition(contract) {
     }
 }
 
@@ -111,7 +96,9 @@ class WhenPassMiddle extends Strategy {
         super(...args);
         this.name = 'when pass middle';
     }
-    buyCondition({ proposal: { ask_price: price }, echo_req: { contract_type: type } }) {
+
+    buyCondition(contract) {
+        const { type } = contract;
         const [ middle ] = bb(this.ticks.list);
         const [ previousSpot, spot ] = this.ticks.list.slice(-2).map(t => t.quote.value);
 
@@ -127,8 +114,8 @@ class WhenPassMiddle extends Strategy {
         return false;
     }
 
-    sellCondition({ proposal_open_contract: { profit } }) {
-        return profit > 0;
+    sellCondition(contract) {
+        return contract.profit > 0;
     }
 }
 
