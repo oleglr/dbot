@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/aminmarashi-binary/dbot#readme",
   "dependencies": {
-    "@deriv/deriv-api": "^1.0.3",
+    "@deriv/deriv-api": "^1.0.4-beta.0",
     "binary-indicators": "^1.5.2",
     "rxjs": "^6.5.3",
     "ws": "^7.2.0"
