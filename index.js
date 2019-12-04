@@ -57,7 +57,7 @@ class Strategy {
         });
 
         const subscriber = contract.onUpdate(() => {
-            if (contract.state === 'proposal') {
+            if (contract.status === 'proposal') {
                 if (this.buyCondition(contract)) {
                     this.buy(contract).catch(console.log);
                 }
