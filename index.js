@@ -51,13 +51,13 @@ class Strategy {
             contract_type: type,
             deal_cancellation: 0, duration_unit: 's',
             limit_order:{},
-            multiplier: 200,
+            multiplier: 500,
             product_type: 'basic',
             symbol,
         });
 
         const subscriber = contract.onUpdate(() => {
-            if (contract.is_opening) {
+            if (contract.state === 'proposal') {
                 if (this.buyCondition(contract)) {
                     this.buy(contract).catch(console.log);
                 }
@@ -82,10 +82,6 @@ class Strategy {
         return contract.sell();
     }
 
-    log() {
-        console.log(this.name);
-    }
-
     buyCondition(contract) {
     }
 
@@ -102,12 +98,13 @@ class WhenPassMiddle extends Strategy {
         this.name = 'when pass middle';
     }
 
-    log(contract) {
+    buy(contract) {
         if (contract.type === 'MULTUP') {
             console.log('spot passed middle, rise');
         } else {
             console.log('spot passed middle, fall');
         }
+        return super.buy(contract);
     }
 
     buyCondition(contract) {
@@ -119,7 +116,6 @@ class WhenPassMiddle extends Strategy {
             (type === 'MULTUP' && previousSpot < middle && spot > middle) ||
             (type === 'MULTDOWN' && previousSpot > middle && spot < middle)
         ) {
-            this.log(contract);
             return true;
         }
 
@@ -133,12 +129,13 @@ class WhenTouchEdge extends Strategy {
         this.name = 'when touch edge';
     }
 
-    log(contract) {
+    buy(contract) {
         if (contract.type === 'MULTUP') {
             console.log('spot touched upper, rise');
         } else {
             console.log('spot touched lower, fall');
         }
+        return super.buy(contract);
     }
 
     buyCondition(contract) {
@@ -150,7 +147,6 @@ class WhenTouchEdge extends Strategy {
             (type === 'MULTUP' && spot === upper) ||
             (type === 'MULTDOWN' && spot === lower)
         ) {
-            this.log(contract);
             return true;
         }
 
@@ -164,12 +160,13 @@ class WhenTrendAndPassMiddle extends WhenPassMiddle {
         this.name = 'when trend and pass middle';
     }
 
-    log(contract) {
+    buy(contract) {
         if (contract.type === 'MULTUP') {
             console.log('spot passed middle, and there is a up trend');
         } else {
             console.log('spot passed middle, and there is a down trend');
         }
+        return super.buy(contract);
     }
 
     buyCondition(contract) {
@@ -200,12 +197,13 @@ class WhenFastTrend extends Strategy {
         this.name = 'when there is a fast trend';
     }
 
-    log(contract) {
+    buy(contract) {
         if (contract.type === 'MULTUP') {
             console.log('Fast trend up');
         } else {
             console.log('Fast trend down');
         }
+        return super.buy(contract);
     }
 
     buyCondition(contract) {
@@ -223,7 +221,6 @@ class WhenFastTrend extends Strategy {
             (diff > 0 && contract.type === 'MULTUP') ||
             (diff < 0 && contract.type === 'MULTDOWN')
         ) {
-            this.log(contract);
             return true;
         }
 
