@@ -86,6 +86,7 @@ class Strategy {
     }
 
     sellCondition(contract) {
+        if (!contract.profit) return false;
         if (contract.profit.signed > this.stake * 1.5) return true;
         if (contract.profit.signed < -1 * this.stake) return true;
         return false;
