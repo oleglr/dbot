@@ -3,8 +3,11 @@ const { default: bollingerBands, bollingerBandsArray } = require( 'binary-indica
 const { Subject } = require('rxjs');
 const WebSocket =require ( 'ws' );
 
+const appId = process.env.app_id;
+const token = process.env.token;
+
 const api = new DerivAPI({
-    connection: new WebSocket('wss://www.binaryqa40.com/websockets/v3?app_id=1009&l=EN&brand=deriv'),
+    connection: new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}&l=EN&brand=deriv`),
 });
 
 const analysisStake = 50;
@@ -344,7 +347,7 @@ async function main () {
         {symbol: 'R_75', pip: 4, mult: 75 , type: 'MULTDOWN', ratio: 0.75 },
         {symbol: 'R_100', pip: 2, mult: 50, type: 'MULTDOWN', ratio: 1.00 },
     ].map(s => api.ticks(s.symbol).then(t => {return {...s, ticks: t}})));
-        await api.basic.authorize('a1-Myy4fDZAFgAOr6IZZvAOOF1FDSWz4');
+        await api.basic.authorize(token);
 
     const profitEvent = new Subject();
 
